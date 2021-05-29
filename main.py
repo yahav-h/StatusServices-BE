@@ -1,3 +1,5 @@
+import sys
+
 from fastapi import FastAPI, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -5,7 +7,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from backend.lambdas import Stamp, DateNow
 from backend.enums import AppState, AppRoutes
 from backend.datatypes import Tasks
-from backend.database import db_session
+from backend.database import db_session, db_init
 from uuid import uuid5, NAMESPACE_URL
 
 
@@ -95,5 +97,8 @@ def task_status(request: Request):
 
 
 if __name__ == '__main__':
-    import uvicorn
-    uvicorn.run('main:app', host="0.0.0.0", port=53459)
+    import uvicorn, sys
+    if not db_init():
+        sys.exit(0)
+    else:
+        uvicorn.run('main:app', host="0.0.0.0", port=53459)
