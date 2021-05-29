@@ -1,5 +1,3 @@
-import sys
-
 from fastapi import FastAPI, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -97,8 +95,9 @@ def task_status(request: Request):
 
 
 if __name__ == '__main__':
-    import uvicorn, sys
+    from sys import exit
+    import uvicorn
     if not db_init():
-        sys.exit(0)
+        exit()
     else:
         uvicorn.run('main:app', host="0.0.0.0", port=53459)
