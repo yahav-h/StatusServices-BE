@@ -5,6 +5,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from backend.lambdas import Stamp, DateNow
 from backend.enums import AppState, AppRoutes
 from backend.datatypes import Tasks
+from backend.database import db_session
 from uuid import uuid5, NAMESPACE_URL
 
 
@@ -38,16 +39,18 @@ def root():
         return JSONResponse(content=json, status_code=400)
 
 
-@app.get(path=AppRoutes.Ping.value)
+@app.post(path=AppRoutes.Ping.value)
 def task_ping(request: Request):
     service_ip = request.query_params.get('ip')
     try:
-        taskId = uuid5(NAMESPACE_URL, f'{Stamp()}').hex
+        task_id = uuid5(NAMESPACE_URL, f'{Stamp()}').hex
+        task_obj = Tasks(taskID=task_id, serviceIP=service_ip, taskStatus=AppState.Pending.value)
+        db_session.add(task_obj)
+        db_session.commit()
         content = {
-            'status': AppState.Success.value,
+            'status': AppState.Pending.value,
             'timestamp': DateNow(),
-            service_ip: AppState.Pending.value,
-            'taskID': taskId
+            'taskID': task_id
         }
         json = jsonable_encoder(obj=content)
         return JSONResponse(content=json, status_code=200)
@@ -93,4 +96,4 @@ def task_status(request: Request):
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run('app:app', host="0.0.0.0", port=53459)
+    uvicorn.run('main:app', host="0.0.0.0", port=53459)
