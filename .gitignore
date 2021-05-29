@@ -1,4 +1,5 @@
 /.idea
 /.git
-/resources
-*.yml
+__pycache__
+venv
+*.db
