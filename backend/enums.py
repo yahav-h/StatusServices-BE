@@ -1,14 +1,17 @@
 from enum import Enum
 
 
-class AppState(Enum):
+class AppStates(Enum):
     Success = "Success"
     Pending = "Pending"
     Fail = "Fail"
+    Done = "Done"
+    ServiceUp = "Up"
+    ServiceDown = "Down"
 
 
 class AppRoutes(Enum):
     Ping = "/api/v1/ping"
-    Root = "/"
+    Health = "/api/v1/health"
 
 
