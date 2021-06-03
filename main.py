@@ -62,8 +62,8 @@ async def ping_domain(address):
 
 @app.post(path=AppRoutes.Ping.value)
 async def task_ping(request: Request):
-    service_ip = request.query_params.get('ip')
-    if not service_ip:
+    identifier = request.query_params.get('identifier')
+    if not identifier:
         content = {
             'status': AppStates.Fail.value,
             'timestamp': DateNow(),
@@ -71,16 +71,23 @@ async def task_ping(request: Request):
         json = jsonable_encoder(obj=content)
         return JSONResponse(content=json, status_code=400)
 
-    task_id = MakeTaskID()
-    task_obj = Tasks(taskID=task_id, serviceIP=service_ip, taskStatus=AppStates.Pending.value)
+    service_id, service_name = tuple(identifier.split(":", 1))
+    try:
+        ip = socket.gethostbyname(service_name.split("://")[-1])
+    except:
+        ip = service_name.split("://")[-1]
+    task_obj = Tasks.query.filter_by(taskID=service_id, serviceName=service_name, serviceIP=ip).first()
+    if not task_obj:
+        task_obj = Tasks(taskID=service_id, serviceName=service_name, serviceIP=ip, taskStatus=AppStates.Pending.value)
 
-    BooleanOrTuple = await ping_domain(service_ip)
-    if isinstance(BooleanOrTuple, bool):
+    result = await ping_domain(ip)
+    if not result[0]:
         task_obj.serviceStatus = AppStates.ServiceDown.value
-    elif isinstance(BooleanOrTuple, tuple):
+    else:
         task_obj.serviceStatus = AppStates.ServiceUp.value
         task_obj.lastTimeCheck = DateNow()
     task_obj.taskStatus = AppStates.Done.value
+    task_id = task_obj.taskID
 
     db_session.add(task_obj)
     db_session.commit()
