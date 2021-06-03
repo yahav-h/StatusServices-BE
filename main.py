@@ -36,12 +36,16 @@ async def ping_domain(address):
     def ping(address):
         cmd = f'ping -c 4 {address}'
         args = shlex.split(cmd)
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-        proc.wait()
-        if proc.poll():
-            return False, proc.stdout.read()
-        else:
-            return True, proc.stdout.read()
+        try:
+            proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+            proc.wait(10)
+            if proc.poll():
+                return False, proc.stdout.read()
+            else:
+                return True, proc.stdout.read()
+        except Exception as e:
+            print(e)
+            return False, None
     try:
         with ThreadPoolExecutor(max_workers=1, thread_name_prefix=f'PING_{address}') as executor:
             future = executor.submit(ping, address)
