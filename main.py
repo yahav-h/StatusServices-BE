@@ -59,11 +59,11 @@ async def ping_domain(address):
     try:
         with ThreadPoolExecutor(max_workers=1, thread_name_prefix=f'PING_{address}') as executor:
             future = executor.submit(ping, address)
-            state = wait(fs=[future], timeout=120, return_when=FIRST_EXCEPTION)
+            state = wait(fs=[future], timeout=10, return_when=FIRST_EXCEPTION)
             if state.done:
                 result = state.done.pop()
-            if result._state == 'Finished':
-                future.set_result(result._state)
+                if result._state == 'Finished':
+                    future.set_result(result._state)
             obj = future.result()
             return obj
     except:
