@@ -101,38 +101,41 @@ async def task_ping(request: Request):
     return JSONResponse(content=json, status_code=200)
 
 
-@app.get(path=AppRoutes.Ping.value)
-def task_status(request: Request):
-    task_id = request.query_params.get('taskid')
-    if not task_id:
+@app.get(path=AppRoutes.Domains.value)
+async def fetch_domains():
+    records = Tasks.query.all()
+    if not records:
         content = {
-            'status': AppStates.Fail.value,
+            'status': AppStates.Success.value,
             'timestamp': DateNow(),
-            'message': 'Missing task id'
+            'domains': []
         }
         json = jsonable_encoder(obj=content)
-        return JSONResponse(content=json, status_code=400)
-    task_obj = Tasks.query.filter_by(taskID=task_id).first()
-    if not task_obj:
-        content = {
-            'status': AppStates.Fail.value,
-            'timestamp': DateNow(),
-            'message': f'Task id \'{task_id}\' does not exists'
+        return JSONResponse(content=json, status_code=200)
+    list_of_records = []
+    for record in records:
+        result = await ping_domain(record.serviceIP)
+        if not result[0]:
+            record.serviceStatus = AppStates.ServiceDown.value
+        else:
+            record.serviceStatus = AppStates.ServiceUp.value
+            record.lastTimeCheck = DateNow()
+        obj = {
+            'taskId': record.taskID,
+            'serviceName': record.serviceName,
+            'serviceIP': record.serviceIP,
+            'serviceStatus': record.serviceStatus,
+            'taskStatus': record.taskStatus,
+            'timeCreated': record.timeCreated,
+            'lastTimeCheck': record.lastTimeCheck
         }
-        json = jsonable_encoder(obj=content)
-        return JSONResponse(content=json, status_code=404)
-
-    service_ip = task_obj.serviceIP
-    service_status = task_obj.serviceStatus
-    last_time_checked = task_obj.lastTimeCheck
-    db_session.add(task_obj)
-    db_session.commit()
-
+        list_of_records.append(obj)
+        db_session.add(record)
+        db_session.commit()
     content = {
-        'status': service_status,
+        'status': AppStates.Success.value,
         'timestamp': DateNow(),
-        'service': service_ip,
-        'serviceTimeCheck': last_time_checked
+        'domains': list_of_records
     }
     json = jsonable_encoder(obj=content)
     return JSONResponse(content=json, status_code=200)
