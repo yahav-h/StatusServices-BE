@@ -13,5 +13,6 @@ class AppStates(Enum):
 class AppRoutes(Enum):
     Ping = "/api/v1/ping"
     Health = "/api/v1/health"
+    Domains = "/api/v1/domains"
 
 
