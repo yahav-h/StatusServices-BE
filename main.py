@@ -128,8 +128,36 @@ def task_status(request: Request):
         'serviceTimeCheck': last_time_checked
     }
     json = jsonable_encoder(obj=content)
-    return JSONResponse(content=json, status_code=400)
+    return JSONResponse(content=json, status_code=200)
 
+
+@app.delete(path=AppRoutes.Domains.value)
+async def remove_task(request: Request):
+    identifier = request.query_params.get('identifier')
+    if not identifier:
+        content = {
+            'status': AppStates.Fail.value,
+            'timestamp': DateNow(),
+        }
+        json = jsonable_encoder(obj=content)
+        return JSONResponse(content=json, status_code=400)
+    service_id, service_name = tuple(identifier.split(":", 1))
+    task_obj = Tasks.query.filter_by(taskID=service_id, serviceName=service_name).first()
+    if not task_obj:
+        content = {
+            'status': AppStates.Success.value,
+            'timestamp': DateNow(),
+        }
+        json = jsonable_encoder(obj=content)
+        return JSONResponse(content=json, status_code=404)
+    db_session.delete(task_obj)
+    db_session.commit()
+    content = {
+        'status': AppStates.Success.value,
+        'timestamp': DateNow()
+    }
+    json = jsonable_encoder(obj=content)
+    return JSONResponse(content=json, status_code=200)
 
 if __name__ == '__main__':
     from sys import exit
