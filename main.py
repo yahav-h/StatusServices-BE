@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.middleware.gzip import GZipMiddleware
-from backend.lambdas import Stamp, DateNow, MakeTaskID
+from backend.lambdas import Stamp, DateNow
 from backend.enums import AppStates, AppRoutes
 from backend.datatypes import Tasks
 from backend.database import db_session, db_init
